@@ -1,0 +1,13 @@
+{
+    "name": "RVlib",
+    "keywords": "longan-nano",
+    "description": "C++ library for Longan Nano",
+    "authors":
+    {
+        "name": "Andreas Müller"
+    },
+    "version": "0.0.1",
+    "downloadUrl": "https://github.com/MuellerA/RVlib.git",
+    "frameworks": "gd32vf103-sdk",
+    "platforms": "gd32v"
+}
