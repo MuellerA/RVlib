@@ -40,12 +40,14 @@ namespace RV
 
     class Usart : public ::RV::IO
     {
+    private:
       friend void ::USART0_IRQHandler() ;
       friend void ::USART1_IRQHandler() ;
       friend void ::USART2_IRQHandler() ;
       
       Usart(uint32_t usart, rcu_periph_enum rcuGpio, rcu_periph_enum rcuUsart, uint32_t irq, uint32_t gpio, uint32_t txPin, uint32_t rxPin) ;
-  
+      Usart(const Usart&) = delete ;
+      
     public:
       void setup(uint32_t baud = 115200) ;
 

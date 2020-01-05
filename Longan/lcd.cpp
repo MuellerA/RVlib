@@ -8,7 +8,6 @@ extern "C"
 }
 
 #include "lcd.h"
-#include "GD32VF103/time.h"
 
 using ::RV::GD32VF103::TickTimer ;
 using ::RV::GD32VF103::Spi ;
@@ -148,14 +147,11 @@ namespace RV
         csLo() ;
         rsHi() ;
 
-        if ((' ' <= ch) || (ch <= '~'))
-          ch -= ' ' ;
-        else
-          ch = 0 ;
+        ch -= ' ' ;
 
-        const uint8_t *charFont = _font + (uint8_t)ch * 16 ;
+        const uint8_t *charFont = _font + (uint8_t)ch * _fontHeight ;
   
-        for (uint8_t y = 0 ; y < 16 ; ++y)
+        for (uint8_t y = 0 ; y < _fontHeight ; ++y)
         {
           for (uint8_t x = 0, c = charFont[y] ; x < 8 ; ++x, c >>= 1)
           {
@@ -226,6 +222,57 @@ namespace RV
       _txtBg = rgb ;
     }
 
+    void Lcd::heartbeat()
+    {
+      if (!_hbTimer())
+        return ;
+
+      // Column Address Set
+      cmd({0x2a, 4, { 0x00, (uint8_t)( 1+152), 0x00, (uint8_t)( 1+159) } }) ; // x-offset  1
+      // Row Address Set
+      cmd({0x2b, 4, { 0x00, (uint8_t)(26+  0), 0x00, (uint8_t)(26+  7) } }) ; // y-offset 26
+      // Memory Write
+      cmd(0x2c) ;
+
+      if (_hbDir)
+      {
+        if (_hbPos < 6)
+          _hbPos += 2 ;
+        else
+        {
+          _hbDir = false ;
+          _hbPos = 4 ;
+        }
+      }
+      else
+      {
+        if (_hbPos > 0)
+          _hbPos -= 2 ;
+        else
+        {
+          _hbDir = true ;
+          _hbPos = 2 ;
+        }
+      }
+      
+      csLo() ;
+      rsHi() ;
+
+      for (uint32_t j = 0 ; j < 8 ; ++j)
+      {
+        for (uint32_t i = 0 ; i < 8 ; ++i)
+        {
+          uint8_t g = (i == _hbPos) ? 0xff : 0x00 ;
+          _spi.put(0x00) ;
+          _spi.put(g) ;
+          _spi.put(0x00) ;
+        }
+      }
+      
+      while (_spi.isTransmit()) ;
+      csHi() ;
+    }
+    
     void Lcd::rstHi() { _pinRst.high() ; }
     void Lcd::rstLo() { _pinRst.low()  ; }
     void Lcd::rsHi()  { _pinRs.high()  ; }

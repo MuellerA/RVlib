@@ -10,17 +10,20 @@
 
 #include "GD32VF103/gpio.h"
 #include "GD32VF103/spi.h"
+#include "GD32VF103/time.h"
 
 namespace RV
 {
   namespace Longan
   {
-    
     class LcdCmdData ;
 
     class Lcd
     {
+    private:
       Lcd() ;
+      Lcd(const Lcd&) = delete ;
+      
     public:
       static Lcd& lcd() ;
       
@@ -33,6 +36,8 @@ namespace RV
       void txtFg(uint32_t rgb) ;
       void txtBg(uint32_t rgb) ;
 
+      void heartbeat() ; // animation in upper right corner
+      
     private:
       void rstHi() ;
       void rstLo() ;
@@ -61,6 +66,11 @@ namespace RV
       uint8_t  _fontWidth ;
       uint32_t _txtFg ;
       uint32_t _txtBg ;
+
+      // heartbeat
+      bool    _hbDir{false} ; // direction
+      uint8_t _hbPos{0} ; // value
+      ::RV::GD32VF103::TickTimer _hbTimer{250, true} ;
     } ;
 
   }

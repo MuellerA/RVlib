@@ -13,9 +13,10 @@ namespace RV
 
     class Spi : public ::RV::IO
     {
-    protected:
+    private:
       Spi(uint32_t spi, rcu_periph_enum rcuSpi, rcu_periph_enum rcuGpio, uint32_t gpio, uint32_t pinClk, uint32_t pinMiso, uint32_t pinMosi) ;
-
+      Spi(const Spi&) = delete ;
+      
     public:
       void setup(uint32_t spiPsc = SPI_PSC_4) ;
 

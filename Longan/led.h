@@ -15,7 +15,6 @@ namespace RV
 {
   namespace Longan
   {
-
     class RgbLed
     {
     public:
@@ -32,6 +31,11 @@ namespace RV
         Gpio &_gpio ;
       } ;
 
+    private:
+      RgbLed() ;
+      RgbLed(const RgbLed&) = delete ;
+      
+    public:      
       const Led &r() ;
       const Led &g() ;
       const Led &b() ;
@@ -53,8 +57,6 @@ namespace RV
       static RgbLed& rgbLed() ;
       
     private:
-      RgbLed() ;
-  
       Led _r{Gpio::gpioC13()} ;
       Led _g{Gpio::gpioA1()} ;
       Led _b{Gpio::gpioA2()} ;

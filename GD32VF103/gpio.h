@@ -11,8 +11,10 @@ namespace RV
 
     class Gpio
     {
+    private:
       Gpio(rcu_periph_enum rcuGpio, uint32_t gpio, uint32_t pin) ;
-
+      Gpio(const Gpio&) = delete ;
+      
     public:
       void setup(uint32_t mode) ;
 
