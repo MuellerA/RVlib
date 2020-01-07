@@ -18,10 +18,10 @@ namespace RV
     {
     }
 
-    void Gpio::setup(uint32_t mode)
+    void Gpio::setup(Gpio::Mode mode)
     {
       rcu_periph_clock_enable(_rcuGpio) ;
-      gpio_init(_gpio, mode, GPIO_OSPEED_50MHZ, _pin) ;
+      gpio_init(_gpio, (uint32_t)mode, GPIO_OSPEED_50MHZ, _pin) ;
     }
 
     void Gpio::set(bool value)

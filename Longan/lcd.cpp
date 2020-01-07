@@ -47,9 +47,9 @@ namespace RV
       _fontWidth = fontWidth ;
 
       _spi.setup() ;
-      _pinRst.setup(GPIO_MODE_OUT_PP) ;
-      _pinRs.setup(GPIO_MODE_OUT_PP) ;
-      _pinCs.setup(GPIO_MODE_OUT_PP) ;
+      _pinRst.setup(Gpio::Mode::OUT_PP) ;
+      _pinRs.setup(Gpio::Mode::OUT_PP) ;
+      _pinCs.setup(Gpio::Mode::OUT_PP) ;
   
       csHi() ;
 
@@ -58,7 +58,7 @@ namespace RV
       rstLo() ; TickTimer::delayMs(250) ;
       rstHi() ; TickTimer::delayMs( 25) ;
 
-      // Sleep Out
+      // Sleep Off
       cmd(0x11) ; TickTimer::delayMs(120) ;
 
       // Display Inversion On

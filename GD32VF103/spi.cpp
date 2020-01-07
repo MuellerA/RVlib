@@ -19,7 +19,7 @@ namespace RV
     {
     }
 
-    void Spi::setup(uint32_t spiPsc)
+    void Spi::setup(Spi::Psc spiPsc)
     {
       rcu_periph_clock_enable(RCU_AF);
       rcu_periph_clock_enable(_rcuSpi);
@@ -37,7 +37,7 @@ namespace RV
       spi_init_struct.frame_size           = SPI_FRAMESIZE_8BIT;
       spi_init_struct.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
       spi_init_struct.nss                  = SPI_NSS_SOFT;
-      spi_init_struct.prescale             = spiPsc ;
+      spi_init_struct.prescale             = (uint32_t)spiPsc ;
       spi_init_struct.endian               = SPI_ENDIAN_MSB;
       spi_init(_spi, &spi_init_struct);
       spi_enable(_spi) ;

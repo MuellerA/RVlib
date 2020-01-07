@@ -18,7 +18,19 @@ namespace RV
       Spi(const Spi&) = delete ;
       
     public:
-      void setup(uint32_t spiPsc = SPI_PSC_4) ;
+      enum class Psc
+        {
+         _2   = SPI_PSC_2,
+         _4   = SPI_PSC_4,
+         _8   = SPI_PSC_8,
+         _16  = SPI_PSC_16,
+         _32  = SPI_PSC_32,
+         _64  = SPI_PSC_64,
+         _128 = SPI_PSC_128,
+         _256 = SPI_PSC_256,
+         
+        } ;
+      void setup(Psc spiPsc = Psc::_4) ;
 
       // RV::IO
       virtual bool get(uint8_t &b) ;

@@ -16,7 +16,18 @@ namespace RV
       Gpio(const Gpio&) = delete ;
       
     public:
-      void setup(uint32_t mode) ;
+      enum class Mode
+        {
+         IN_AN  = GPIO_MODE_AIN,          // analog input
+         IN_FL  = GPIO_MODE_IN_FLOATING,  // floating input
+         IN_PD  = GPIO_MODE_IPD,          // pull down input
+         IN_PU  = GPIO_MODE_IPU,          // pull up input
+         OUT_OD = GPIO_MODE_OUT_OD,       // open drain output
+         OUT_PP = GPIO_MODE_OUT_PP,       // push pull output
+         AF_OD  = GPIO_MODE_AF_OD,        // open drain AF
+         AF_PP  = GPIO_MODE_AF_PP,        // push pull AF
+        } ;
+      void setup(Mode mode) ;
 
       void set(bool value) ;
       void high() ;

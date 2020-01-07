@@ -30,9 +30,9 @@ namespace RV
 
     void RgbLed::setup()
     {
-      _r._gpio.setup(GPIO_MODE_OUT_PP) ;
-      _g._gpio.setup(GPIO_MODE_OUT_PP) ;
-      _b._gpio.setup(GPIO_MODE_OUT_PP) ;
+      _r._gpio.setup(Gpio::Mode::OUT_PP) ;
+      _g._gpio.setup(Gpio::Mode::OUT_PP) ;
+      _b._gpio.setup(Gpio::Mode::OUT_PP) ;
 
       _r.off() ;
       _g.off() ;
