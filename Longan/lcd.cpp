@@ -8,6 +8,7 @@ extern "C"
 }
 
 #include "lcd.h"
+#include "toStr.h"
 
 using ::RV::GD32VF103::TickTimer ;
 using ::RV::GD32VF103::Spi ;
@@ -195,6 +196,39 @@ namespace RV
         put(*(str++)) ;
     }
 
+    void Lcd::put(const char *str, uint32_t size)
+    {
+      const char *eStr = str + size ;
+      while (str < eStr)
+        put(*(str++)) ;
+    }
+
+    void Lcd::put(uint32_t val, uint8_t fmtSize, char leadingChar , bool hex)
+    {
+      uint8_t size = fmtSize ? fmtSize : 16 ;
+      if (fmtSize && !leadingChar)
+        leadingChar = ' ' ;
+      char buff[size] ;
+      char *str = ::RV::toStr(val, buff, size, leadingChar, hex) ;
+      if (str)
+        put(str, fmtSize ? fmtSize : buff+size-str) ;
+      else
+        put(buff, fmtSize ? fmtSize : 1) ;
+    }
+    
+    void Lcd::put( int32_t val, uint8_t fmtSize, char leadingChar)
+    {
+      uint8_t size = fmtSize ? fmtSize : 16 ;
+      if (fmtSize && !leadingChar)
+        leadingChar = ' ' ;
+      char buff[size] ;
+      char *str = ::RV::toStr(val, buff, size, leadingChar) ;
+      if (str)
+        put(str, fmtSize ? fmtSize : buff+size-str) ;
+      else
+        put(buff, fmtSize ? fmtSize : 1) ;
+    }
+    
     void Lcd::txtArea(uint8_t xMin, uint8_t xMax, uint8_t yMin, uint8_t yMax)
     {
       _txtAreaXmin = xMin ;

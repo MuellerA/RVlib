@@ -31,6 +31,17 @@ namespace RV
       void fill(uint8_t xMin, uint8_t xMax, uint8_t yMin, uint8_t yMax, uint32_t rgb = 0x000000) ;
       void put(char ch) ;
       void put(const char *str) ;
+      void put(const char *str, uint32_t size) ;
+      void put(uint32_t val, uint8_t size = 0, char leadingChar = 0 , bool hex = false) ;
+      void put( int32_t val, uint8_t size = 0, char leadingChar = 0) ;
+      void put(uint16_t val, uint8_t size = 0, char leadingChar = 0 , bool hex = false)
+      { put((uint32_t) val, size, leadingChar, hex) ; }
+      void put( int16_t val, uint8_t size = 0, char leadingChar = 0)
+      { put(( int32_t) val, size, leadingChar) ; }
+      void put(uint8_t val, uint8_t size = 0, char leadingChar = 0 , bool hex = false)
+      { put((uint32_t) val, size, leadingChar, hex) ; }
+      void put( int8_t val, uint8_t size = 0, char leadingChar = 0)
+      { put(( int32_t) val, size, leadingChar) ; }
       void txtArea(uint8_t xMin, uint8_t xMax, uint8_t yMin, uint8_t yMax) ;
       void txtPos(uint8_t row = 0, uint8_t col = 0) ;
       void txtFg(uint32_t rgb) ;
