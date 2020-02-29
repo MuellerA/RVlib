@@ -5,7 +5,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "../Adafruit-GFX-Library/gfxfont.h"
+#include "../lib/Adafruit-GFX-Library/gfxfont.h"
 
 extern const GFXfont Roboto_Light7pt7b ;
 extern const GFXfont Roboto_Bold7pt7b ;
