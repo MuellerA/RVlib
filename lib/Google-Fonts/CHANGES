@@ -1,0 +1,12 @@
+Downloaded fonts from
+https://fonts.google.com/specimen/Roboto
+https://fonts.google.com/specimen/Roboto+Mono
+
+Convert with Adafruit's fontconvert
+fontconvert RobotoMono-Light.ttf 6 > RobotoMonoLight6pt7b.cpp
+fontconvert Roboto-Light.ttf 7 > RobotoLight7pt7b.cpp
+fontconvert Roboto-Bold.ttf 7 > RobotoBold7pt7b.cpp
+
+Edit .cpp files
+add #include "Longan/fonts.h"
+remove 'PROGMEM' keywords

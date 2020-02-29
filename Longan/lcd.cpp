@@ -9,6 +9,7 @@ extern "C"
 
 #include "lcd.h"
 #include "toStr.h"
+#include "fonts.h"
 
 using ::RV::GD32VF103::TickTimer ;
 using ::RV::GD32VF103::Spi ;
@@ -18,20 +19,233 @@ namespace RV
 {
   namespace Longan
   {
-
-    struct LcdCmdData
+    class LcdCmdData
     {
+    public:
       uint8_t _cmd ;
       uint8_t _size ;
       uint8_t _data[16] ; // max size
     } ;
 
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    LcdArea::LcdArea(Lcd &lcd, uint32_t xMin, uint32_t xSize, uint32_t yMin, uint32_t ySize, const GFXfont *gfxFont, uint32_t fgCol, uint32_t bgCol)
+      : _lcd{lcd}
+    {
+      area(xMin, xSize, yMin, ySize) ;
+      font(gfxFont) ;
+      color(fgCol, bgCol) ;
+    }
+
+    void LcdArea::area(uint32_t xMin, uint32_t xSize, uint32_t yMin, uint32_t ySize)
+    {
+      _xMin = xMin ;
+      _xMax = xMin + xSize - 1 ;
+      _xSize = xSize ;
+
+      _yMin = yMin ;
+      _yMax = yMin + ySize - 1 ;
+      _ySize = ySize ;
+    }
+    
+    void LcdArea::font(const GFXfont *gfxFont)
+    {
+      _font = gfxFont ? gfxFont : &Roboto_Light7pt7b ;
+      GFXglyph *glyph = _font->glyph ;
+      int8_t yOffset = 0 ;
+      for (uint16_t iGlyph = _font->first ; iGlyph <= _font->last ; ++iGlyph)
+      {
+        if (glyph->yOffset < yOffset)
+          yOffset = glyph->yOffset ;
+        glyph += 1 ;
+      }
+      _baseLineOffset = -yOffset ;
+
+      _x = 0, _y = _baseLineOffset ;
+    }
+
+    void LcdArea::color(uint32_t fgCol, uint32_t bgCol)
+    {
+      _fgCol = fgCol ;
+      _bgCol = bgCol ;
+    }
+
+    void LcdArea::pos(uint32_t x, uint32_t y)
+    {
+      _x = x ; _y = y ;
+    }
+
+    void LcdArea::txtPos(uint32_t row, uint32_t col)
+    {
+      if (!col)
+      {
+        _x = 0 ;
+      }
+      else if ((_font->first <= ' ') && (' ' <= _font->last))
+      {
+        const GFXglyph *sp = _font->glyph + ' ' - _font->first ;
+        _x = col * sp->xAdvance ;
+      }
+      else
+      {
+        _x = col * _font->glyph->xAdvance ;
+      }
+
+      _y = row * _font->yAdvance + _baseLineOffset ;
+    }
+    
+    void LcdArea::clear()
+    {
+      clear(_bgCol) ;
+    }
+    void LcdArea::clear(uint32_t rgb)
+    {
+      fill(0, _xSize, 0, _ySize, rgb) ;
+      _x = 0 ;
+      _y = _baseLineOffset ;
+    }
+    
+    void LcdArea::fill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, uint32_t rgb)
+    {
+      if (xSize > (_xSize - xMin)) xSize = _xSize - xMin ;
+      if (ySize > (_ySize - yMin)) ySize = _ySize - yMin ;
+      
+      _lcd.absFill(_xMin + xMin, xSize, _yMin + yMin, ySize, rgb) ;
+    }
+
+   void LcdArea::put(char ch)
+    {
+      if ((_font->first <= ch) && (ch <= _font->last))
+      {
+        const GFXglyph *glyph = _font->glyph + ch - _font->first ;
+        uint32_t xSize = glyph->xAdvance ;
+        uint32_t ySize = _font->yAdvance ;
+        
+        if ((xSize > _xSize) ||
+            (ySize > _ySize))
+          return ;
+
+        if (_x + xSize > _xSize)
+        {
+          _x = 0 ;
+          _y += ySize ;
+        }
+        if ((_y + (ySize - _baseLineOffset)) > _ySize)
+        {
+          _y = _baseLineOffset ;
+        }
+
+        uint32_t absX = _x + _xMin ;
+        uint32_t absY = _y + _yMin - _baseLineOffset; ;
+
+        _lcd.absFill(absX, xSize, absY, ySize, _bgCol) ;
+
+        absX = _x + _xMin + glyph->xOffset ;
+        absY = _y + _yMin + glyph->yOffset ;
+        uint32_t absXSize = glyph->width ;
+        uint32_t absYSize = glyph->height ;
+
+        uint32_t bit = 0 ;
+        uint8_t  *data = _font->bitmap + glyph->bitmapOffset ;
+        
+        _lcd.absFill(absX, absXSize, absY, absYSize, [&bit, data, this]()->uint32_t
+                                                     {
+                                                       uint32_t byte = bit / 8 ;
+                                                       uint8_t  mask = 0x80 >> (bit % 8) ;
+                                                       bit += 1 ;
+                                                       return (data[byte] & mask) ? _fgCol : _bgCol ;
+                                                     }) ;
+        _x += xSize ;
+      }
+      else
+      {
+        if (ch == 0x0a) // LF
+        {
+          uint32_t ySize = _font->yAdvance ;
+          
+          _x = 0 ;
+          _y += ySize ;
+          if ((_y + (ySize - _baseLineOffset)) > _ySize)
+          {
+            _y = _baseLineOffset ;
+          }
+          return ;
+        }
+        if (ch == 0x0d) // CR
+        {
+          _x = 0 ;
+          return ;
+        }
+        if (ch == 0x0c) // FF
+        {
+          _x = 0 ;
+          _y = _baseLineOffset ;
+          clear() ;
+          return ;
+        }
+      }
+    }
+
+    void LcdArea::put(const char *str)
+    {
+      while (*str)
+        put(*(str++)) ;
+    }
+
+    void LcdArea::put(const char *str, uint32_t size)
+    {
+      const char *eStr = str + size ;
+      while (str < eStr)
+        put(*(str++)) ;
+    }
+
+    void LcdArea::put(uint32_t val, uint8_t fmtSize, char leadingChar , bool hex)
+    {
+      uint8_t size = fmtSize ? fmtSize : 16 ;
+      if (fmtSize && !leadingChar)
+        leadingChar = ' ' ;
+      char buff[size] ;
+      char *str = ::RV::toStr(val, buff, size, leadingChar, hex) ;
+      if (str)
+        put(str, fmtSize ? fmtSize : buff+size-str) ;
+      else
+        put(buff, fmtSize ? fmtSize : 1) ;
+    }
+    
+    void LcdArea::put( int32_t val, uint8_t fmtSize, char leadingChar)
+    {
+      uint8_t size = fmtSize ? fmtSize : 16 ;
+      if (fmtSize && !leadingChar)
+        leadingChar = ' ' ;
+      char buff[size] ;
+      char *str = ::RV::toStr(val, buff, size, leadingChar) ;
+      if (str)
+        put(str, fmtSize ? fmtSize : buff+size-str) ;
+      else
+        put(buff, fmtSize ? fmtSize : 1) ;
+    }
+    
+    uint32_t LcdArea::x() const { return _x ; }
+    uint32_t LcdArea::y() const { return _y ; }
+    uint32_t LcdArea::fgCol() const { return _fgCol ; }
+    uint32_t LcdArea::bgCol() const { return _bgCol ; }
+      
+    uint16_t LcdArea::xMin() const { return _xMin ; }
+    uint16_t LcdArea::xMax() const { return _xMax ; }
+    uint16_t LcdArea::xSize() const { return _xSize ; }
+    uint16_t LcdArea::yMin() const { return _yMin ; }
+    uint16_t LcdArea::yMax() const { return _yMax ; }
+    uint16_t LcdArea::ySize() const { return _ySize ; }
+
+    const GFXfont* LcdArea::font() const { return _font ; }
+    uint8_t  LcdArea::baseLineOffset() const { return _baseLineOffset ; }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    
     Lcd::Lcd()
       // LCD: B0 RS, B1 RST, B2 CS
-      : _spi{Spi::spi0()}, _pinRst{Gpio::gpioB1()}, _pinRs{Gpio::gpioB0()}, _pinCs{Gpio::gpioB2()},
-        _txtAreaXmin{0}, _txtAreaXmax{159}, _txtAreaYmin{0}, _txtAreaYmax{79}, _txtPosX{0}, _txtPosY{0},
-        _font{nullptr}, _fontHeight{0}, _fontWidth{0},
-        _txtFg{0xffffff}, _txtBg{0x000000}
+      : LcdArea{*this},
+        _spi{Spi::spi0()}, _pinRst{Gpio::gpioB1()}, _pinRs{Gpio::gpioB0()}, _pinCs{Gpio::gpioB2()}
     {
     }
 
@@ -41,12 +255,8 @@ namespace RV
       return *lcd ;
     }
     
-    void Lcd::setup(const uint8_t *font, uint8_t fontHeight, uint8_t fontWidth)
+    void Lcd::setup()
     {
-      _font = font ;
-      _fontHeight = fontHeight ;
-      _fontWidth = fontWidth ;
-
       _spi.setup() ;
       _pinRst.setup(Gpio::Mode::OUT_PP) ;
       _pinRs.setup(Gpio::Mode::OUT_PP) ;
@@ -59,8 +269,8 @@ namespace RV
       rstLo() ; TickTimer::delayMs(250) ;
       rstHi() ; TickTimer::delayMs( 25) ;
 
-      // Sleep Off
-      cmd(0x11) ; TickTimer::delayMs(120) ;
+      // Sleep Out
+      sleepOut() ;
 
       // Display Inversion On
       cmd(0x21) ;
@@ -93,25 +303,28 @@ namespace RV
       // Memory Data Access Control
       cmd({0x36,  1, { 0xa8 } }) ; // orientation 08, c8, 78, a8
       // clr
-      txtArea(0, 159, 0, 79) ;
+      clear() ;
       // Display On
-      cmd(0x29) ;
+      on() ;
     }
 
-    void Lcd::fill(uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2, uint32_t rgb)
+    void Lcd::absFill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, uint32_t rgb)
     {
+      if (!xSize || !ySize)
+        return ;
+      
       // Column Address Set
-      cmd({0x2a, 4, { 0x00, (uint8_t)( 1+x1), 0x00, (uint8_t)( 1+x2) } }) ; // x-offset  1
+      cmd({0x2a, 4, { 0x00, (uint8_t)( 1+xMin), 0x00, (uint8_t)( 1+xMin+xSize-1) } }) ; // x-offset  1
       // Row Address Set
-      cmd({0x2b, 4, { 0x00, (uint8_t)(26+y1), 0x00, (uint8_t)(26+y2) } }) ; // y-offset 26
+      cmd({0x2b, 4, { 0x00, (uint8_t)(26+yMin), 0x00, (uint8_t)(26+yMin+ySize-1) } }) ; // y-offset 26
       // Memory Write
       cmd(0x2c) ;
   
       csLo() ;
       rsHi() ;
-      for (uint32_t i = x1 ; i <= x2 ; ++i)
+      for (uint32_t i = 0 ; i < xSize ; ++i)
       {
-        for (uint32_t j = y1 ; j <= y2 ; ++j)
+        for (uint32_t j = 0 ; j < ySize ; ++j)
         {
           _spi.put(rgb >> 16) ;
           _spi.put(rgb >>  8) ;
@@ -122,138 +335,32 @@ namespace RV
       csHi() ;
     }
 
-    void Lcd::put(char ch)
+    void Lcd::absFill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, std::function<uint32_t()> rgbCb)
     {
-      if ((' ' <= ch) && (ch <= '~')) // 7bit ASCII
-      {
-        if ((_txtPosX + _fontWidth) > _txtAreaXmax+1)
-        {
-          _txtPosX  = _txtAreaXmin ;
-          _txtPosY += _fontHeight ;
-        }
-        if ((_txtPosY + _fontHeight) > _txtAreaYmax+1)
-        {
-          _txtPosY  = _txtAreaYmin ;
-        }
-
-        uint8_t x = (uint8_t)_txtPosX +  1 ; // x-offset  1
-        uint8_t y = (uint8_t)_txtPosY + 26 ; // y-offset 26
-        _txtPosX += _fontWidth ;
-        cmd({0x2a, 4, { 0x00, (uint8_t)(x+0), 0x00, (uint8_t)(x+_fontWidth -1) } }) ;
-        cmd({0x2b, 4, { 0x00, (uint8_t)(y+0), 0x00, (uint8_t)(y+_fontHeight-1) } }) ;
-
-        // Memory Write
-        cmd(0x2c) ;
+      if (!xSize || !ySize)
+        return ;
+      
+      // Column Address Set
+      cmd({0x2a, 4, { 0x00, (uint8_t)( 1+xMin), 0x00, (uint8_t)( 1+xMin+xSize-1) } }) ; // x-offset  1
+      // Row Address Set
+      cmd({0x2b, 4, { 0x00, (uint8_t)(26+yMin), 0x00, (uint8_t)(26+yMin+ySize-1) } }) ; // y-offset 26
+      // Memory Write
+      cmd(0x2c) ;
   
-        csLo() ;
-        rsHi() ;
-
-        ch -= ' ' ;
-
-        const uint8_t *charFont = _font + (uint8_t)ch * _fontHeight ;
-  
-        for (uint8_t y = 0 ; y < _fontHeight ; ++y)
-        {
-          for (uint8_t x = 0, c = charFont[y] ; x < 8 ; ++x, c >>= 1)
-          {
-            uint32_t rgb = (c & 0x01) ? _txtFg : _txtBg ;
-            _spi.put(rgb >> 16) ;
-            _spi.put(rgb >>  8) ;
-            _spi.put(rgb >>  0) ;
-          }
-        }  
-        while (_spi.isTransmit()) ;
-        csHi() ;
-      }
-      else
+      csLo() ;
+      rsHi() ;
+      for (uint32_t i = 0 ; i < xSize ; ++i)
       {
-        if (ch == 0x0a) // LF
+        for (uint32_t j = 0 ; j < ySize ; ++j)
         {
-          _txtPosX = _txtAreaXmin ;
-          _txtPosY += _fontHeight ;
-          if ((_txtPosY + _fontHeight) > _txtAreaYmax+1)
-            _txtPosY  = _txtAreaYmin ;
-          return ;
-        }
-        if (ch == 0x0d) // CR
-        {
-          _txtPosX = _txtAreaXmin ;
-          return ;
-        }
-        if (ch == 0x0c) // FF
-        {
-          _txtPosX = _txtAreaXmin ;
-          _txtPosY = _txtAreaYmin ;
-          fill(_txtAreaXmin, _txtAreaXmax, _txtAreaYmin, _txtAreaYmax, _txtBg) ;
-          return ;
+          uint32_t rgb = rgbCb() ;
+          _spi.put(rgb >> 16) ;
+          _spi.put(rgb >>  8) ;
+          _spi.put(rgb >>  0) ;
         }
       }
-    }
-
-    void Lcd::put(const char *str)
-    {
-      while (*str)
-        put(*(str++)) ;
-    }
-
-    void Lcd::put(const char *str, uint32_t size)
-    {
-      const char *eStr = str + size ;
-      while (str < eStr)
-        put(*(str++)) ;
-    }
-
-    void Lcd::put(uint32_t val, uint8_t fmtSize, char leadingChar , bool hex)
-    {
-      uint8_t size = fmtSize ? fmtSize : 16 ;
-      if (fmtSize && !leadingChar)
-        leadingChar = ' ' ;
-      char buff[size] ;
-      char *str = ::RV::toStr(val, buff, size, leadingChar, hex) ;
-      if (str)
-        put(str, fmtSize ? fmtSize : buff+size-str) ;
-      else
-        put(buff, fmtSize ? fmtSize : 1) ;
-    }
-    
-    void Lcd::put( int32_t val, uint8_t fmtSize, char leadingChar)
-    {
-      uint8_t size = fmtSize ? fmtSize : 16 ;
-      if (fmtSize && !leadingChar)
-        leadingChar = ' ' ;
-      char buff[size] ;
-      char *str = ::RV::toStr(val, buff, size, leadingChar) ;
-      if (str)
-        put(str, fmtSize ? fmtSize : buff+size-str) ;
-      else
-        put(buff, fmtSize ? fmtSize : 1) ;
-    }
-    
-    void Lcd::txtArea(uint8_t xMin, uint8_t xMax, uint8_t yMin, uint8_t yMax)
-    {
-      _txtAreaXmin = xMin ;
-      _txtAreaXmax = xMax ;
-      _txtAreaYmin = yMin ;
-      _txtAreaYmax = yMax ;
-      _txtPosX = xMin ;
-      _txtPosY = yMin ;
-
-      fill(_txtAreaXmin, _txtAreaXmax, _txtAreaYmin, _txtAreaYmax, _txtBg) ;
-    }
-
-    void Lcd::txtPos(uint8_t row, uint8_t col)
-    {
-      _txtPosX = _txtAreaXmin + col * _fontWidth ;
-      _txtPosY = _txtAreaYmin + row * _fontHeight ;
-    }
-
-    void Lcd::txtFg(uint32_t rgb)
-    {
-      _txtFg = rgb ;
-    }
-    void Lcd::txtBg(uint32_t rgb)
-    {
-      _txtBg = rgb ;
+      while (_spi.isTransmit()) ;
+      csHi() ;
     }
 
     void Lcd::heartbeat()
@@ -306,6 +413,12 @@ namespace RV
       while (_spi.isTransmit()) ;
       csHi() ;
     }
+
+    void Lcd::off() { cmd(0x28) ; }
+    void Lcd::on()  { cmd(0x29) ; }
+    void Lcd::sleepIn()  { cmd(0x10) ; TickTimer::delayMs(120) ; }
+    void Lcd::sleepOut() { cmd(0x11) ; TickTimer::delayMs(120) ; }
+      
     
     void Lcd::rstHi() { _pinRst.high() ; }
     void Lcd::rstLo() { _pinRst.low()  ; }

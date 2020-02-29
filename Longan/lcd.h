@@ -12,23 +12,30 @@
 #include "GD32VF103/spi.h"
 #include "GD32VF103/time.h"
 
+#include "lib/Adafruit-GFX-Library/gfxfont.h"
+#include <functional>
+
 namespace RV
 {
   namespace Longan
   {
+    class Lcd ;
     class LcdCmdData ;
 
-    class Lcd
+    class LcdArea
     {
-    private:
-      Lcd() ;
-      Lcd(const Lcd&) = delete ;
-      
     public:
-      static Lcd& lcd() ;
-      
-      void setup(const uint8_t *font, uint8_t fontHeight, uint8_t fontWidth) ;
-      void fill(uint8_t xMin, uint8_t xMax, uint8_t yMin, uint8_t yMax, uint32_t rgb = 0x000000) ;
+      LcdArea(Lcd &lcd, uint32_t xMin = 0, uint32_t xSize = 160, uint32_t yMin = 0, uint32_t ySize = 80, const GFXfont *gfxFont = nullptr, uint32_t fgCol = 0xffffff, uint32_t bgCol = 0x000000) ;
+
+      void area(uint32_t xMin, uint32_t _xSize, uint32_t yMin, uint32_t ySize) ;
+      void font(const GFXfont *font) ;
+      void color(uint32_t fgCol, uint32_t bgCol) ;
+      void pos(uint32_t x, uint32_t y) ;
+      void txtPos(uint32_t row, uint32_t col = 0) ;
+
+      void clear() ;
+      void clear(uint32_t rgb) ;
+      void fill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, uint32_t rgb = 0x000000) ;
       void put(char ch) ;
       void put(const char *str) ;
       void put(const char *str, uint32_t size) ;
@@ -42,14 +49,65 @@ namespace RV
       { put((uint32_t) val, size, leadingChar, hex) ; }
       void put( int8_t val, uint8_t size = 0, char leadingChar = 0)
       { put(( int32_t) val, size, leadingChar) ; }
-      void txtArea(uint8_t xMin, uint8_t xMax, uint8_t yMin, uint8_t yMax) ;
-      void txtPos(uint8_t row = 0, uint8_t col = 0) ;
-      void txtFg(uint32_t rgb) ;
-      void txtBg(uint32_t rgb) ;
+
+      uint32_t x() const ;
+      uint32_t y() const ;
+      uint32_t fgCol() const ;
+      uint32_t bgCol() const ;
+      
+      uint16_t xMin() const ;
+      uint16_t xMax() const ;
+      uint16_t xSize() const ;
+      uint16_t yMin() const ;
+      uint16_t yMax() const ;
+      uint16_t ySize() const ;
+
+      const GFXfont* font() const ;
+      uint8_t baseLineOffset() const ;
+
+    private:
+      Lcd &_lcd ;
+
+      uint32_t _x ; // cursor pos
+      uint32_t _y ;
+      uint32_t _fgCol ;
+      uint32_t _bgCol ;
+      
+      uint16_t _xMin ;
+      uint16_t _xMax ;
+      uint16_t _xSize ;
+      uint16_t _yMin ;
+      uint16_t _yMax ;
+      uint16_t _ySize ;
+
+      const GFXfont *_font ;
+      uint8_t _baseLineOffset ;
+    } ;
+    
+    class Lcd : public LcdArea
+    {
+      friend class LcdArea ;
+      
+    private:
+      Lcd() ;
+      Lcd(const Lcd&) = delete ;
+      
+    public:
+      static Lcd& lcd() ;
+
+      void setup() ;
 
       void heartbeat() ; // animation in upper right corner
       
+      void off() ;
+      void on() ;
+      void sleepIn() ; // takes 120ms!
+      void sleepOut() ; // takes 120ms!
+      
     private:
+      void absFill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, uint32_t rgb = 0x000000) ;
+      void absFill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, std::function<uint32_t()> rgbCb) ;
+      
       void rstHi() ;
       void rstLo() ;
       void rsHi()  ;
@@ -65,18 +123,6 @@ namespace RV
       ::RV::GD32VF103::Gpio &_pinRst ;
       ::RV::GD32VF103::Gpio &_pinRs ;
       ::RV::GD32VF103::Gpio &_pinCs ;
-
-      uint32_t _txtAreaXmin ; // area in which text is printed
-      uint32_t _txtAreaXmax ;
-      uint32_t _txtAreaYmin ;
-      uint32_t _txtAreaYmax ;
-      uint32_t _txtPosX ; // pos at which next char is inserted
-      uint32_t _txtPosY ;
-      const uint8_t  *_font ; // ' ' .. '~'
-      uint8_t  _fontHeight ; // fixed font only
-      uint8_t  _fontWidth ;
-      uint32_t _txtFg ;
-      uint32_t _txtBg ;
 
       // heartbeat
       bool    _hbDir{false} ; // direction
