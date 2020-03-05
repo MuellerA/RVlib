@@ -1,6 +1,4 @@
-#include "Longan/fonts.h"
-
-static const uint8_t RobotoMono_Light6pt7bBitmaps[] = {
+const uint8_t RobotoMono_Light6pt7bBitmaps[] PROGMEM = {
   0xFE, 0x80, 0xB6, 0x80, 0x14, 0x49, 0xF9, 0x22, 0x85, 0x3F, 0x14, 0x48,
   0x21, 0x93, 0x18, 0x20, 0xC1, 0x8C, 0x5C, 0x40, 0x61, 0x4A, 0xA3, 0x41,
   0x03, 0x8A, 0xA5, 0x0E, 0x72, 0x49, 0x18, 0x62, 0x99, 0x62, 0x74, 0xE0,
@@ -46,7 +44,7 @@ static const uint8_t RobotoMono_Light6pt7bBitmaps[] = {
   0x84, 0x44, 0x42, 0x10, 0xFF, 0xE0, 0x84, 0x44, 0x42, 0x12, 0x44, 0x44,
   0x80, 0x63, 0x26, 0x30 };
 
-static const GFXglyph RobotoMono_Light6pt7bGlyphs[] = {
+const GFXglyph RobotoMono_Light6pt7bGlyphs[] PROGMEM = {
   {     0,   0,   0,   7,    0,    1 },   // 0x20 ' '
   {     0,   1,   9,   7,    3,   -8 },   // 0x21 '!'
   {     2,   3,   3,   7,    2,   -9 },   // 0x22 '"'
@@ -143,7 +141,7 @@ static const GFXglyph RobotoMono_Light6pt7bGlyphs[] = {
   {   510,   4,  13,   7,    2,   -9 },   // 0x7D '}'
   {   517,   7,   3,   7,    0,   -5 } }; // 0x7E '~'
 
-const GFXfont RobotoMono_Light6pt7b = {
+const GFXfont RobotoMono_Light6pt7b PROGMEM = {
   (uint8_t  *)RobotoMono_Light6pt7bBitmaps,
   (GFXglyph *)RobotoMono_Light6pt7bGlyphs,
   0x20, 0x7E, 16 };
