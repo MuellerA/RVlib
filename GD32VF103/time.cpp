@@ -19,6 +19,11 @@ namespace RV
     {
     }
 
+    TickTimer::TickTimer(uint32_t ms, uint32_t firstMs, bool cyclic, bool exact)
+      : _timeTick{now() - msToTick(firstMs)+msToTick(ms)}, _deltaTick{msToTick(ms)}, _cyclic{cyclic}, _exact{exact}
+    {
+    }
+
     bool TickTimer::operator()()
     {
       uint64_t t = now() ;

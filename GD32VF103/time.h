@@ -13,6 +13,7 @@ namespace RV
       // sys tick is SytemCoreClock/4 Hz
     public:
       TickTimer(uint32_t ms, bool cyclic = false, bool exact = false) ;
+      TickTimer(uint32_t ms, uint32_t firstMs, bool cyclic = false, bool exact = false) ;
       TickTimer(const TickTimer&) = delete ;
       
       bool operator()() ; // has expired (and restart if cyclic==true)
