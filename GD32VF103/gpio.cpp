@@ -97,8 +97,185 @@ namespace RV
     Gpio& Gpio::gpioC13() { static Gpio *gpio = new Gpio(RCU_GPIOC, GPIOC, GPIO_PIN_13) ; return *gpio ; }
     Gpio& Gpio::gpioC14() { static Gpio *gpio = new Gpio(RCU_GPIOC, GPIOC, GPIO_PIN_14) ; return *gpio ; }
     Gpio& Gpio::gpioC15() { static Gpio *gpio = new Gpio(RCU_GPIOC, GPIOC, GPIO_PIN_15) ; return *gpio ; }
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    GpioIrq::GpioIrq(rcu_periph_enum rcuGpio, uint32_t gpio, uint32_t pin, uint32_t eclicSource,
+                     uint8_t extiSourcePort, uint8_t extiSourcePin, exti_line_enum extiLine)
+      : _rcuGpio{rcuGpio}, _gpio{gpio}, _pin{pin}, _eclicSource{eclicSource},
+        _extiSourcePort{extiSourcePort}, _extiSourcePin{extiSourcePin}, _extiLine{extiLine}
+    {
+    }
+
+    void GpioIrq::setup(GpioIrq::Mode mode, Handler handler)
+    {
+      _handler = handler ;
+
+      rcu_periph_clock_enable(_rcuGpio) ;
+      rcu_periph_clock_enable(RCU_AF);
+      
+      gpio_init(_gpio, (uint32_t)mode, GPIO_OSPEED_50MHZ, _pin) ;
+      eclic_global_interrupt_enable();
+      eclic_priority_group_set(ECLIC_PRIGROUP_LEVEL3_PRIO1);
+      eclic_irq_enable(_eclicSource, 1, 1);
+      gpio_exti_source_select(_extiSourcePort, _extiSourcePin);
+      exti_init(_extiLine, EXTI_INTERRUPT, EXTI_TRIG_BOTH);
+      exti_interrupt_flag_clear(_extiLine);
+    }
+
+    volatile bool GpioIrq::get()
+    {
+      irqDisable() ;
+      bool value = _value ;
+      irqEnable() ;
+      return value ;
+    }
+
+    void GpioIrq::irqDisable()
+    {
+      eclic_irq_disable(_eclicSource) ;
+    }
+
+    void GpioIrq::irqEnable()
+    {
+      eclic_irq_enable(_eclicSource, 1, 1) ;
+    }
     
+    void GpioIrq::irqHandler()
+    {
+      _value = gpio_input_bit_get(_gpio, _pin) ;
+      if (_handler) _handler(_value) ;
+    }    
+
+    GpioIrq& GpioIrq::gpioA0()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_0 , EXTI0_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_0 , EXTI_0 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA1()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_1 , EXTI1_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_1 , EXTI_1 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA2()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_2 , EXTI2_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_2 , EXTI_2 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA3()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_3 , EXTI3_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_3 , EXTI_3 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA4()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_4 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_4 , EXTI_4 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA5()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_5 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_5 , EXTI_5 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA6()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_6 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_6 , EXTI_6 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA7()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_7 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_7 , EXTI_7 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA8()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_8 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_8 , EXTI_8 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA9()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_9 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_9 , EXTI_9 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA10() { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_10, EXTI10_15_IRQn, GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_10, EXTI_10} ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA11() { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_11, EXTI10_15_IRQn, GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_11, EXTI_11} ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA12() { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_12, EXTI10_15_IRQn, GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_12, EXTI_12} ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA13() { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_13, EXTI10_15_IRQn, GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_13, EXTI_13} ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA14() { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_14, EXTI10_15_IRQn, GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_14, EXTI_14} ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA15() { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_15, EXTI10_15_IRQn, GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_15, EXTI_15} ; return *gpio ; }
   }
+}
+
+extern "C"
+{
+  void EXTI0_IRQHandler()
+  {
+    if (exti_interrupt_flag_get(EXTI_0) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA0().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_0);
+    }
+  }
+
+  void EXTI1_IRQHandler()
+  {
+    if (exti_interrupt_flag_get(EXTI_1) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA1().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_1);
+    }
+  }
+
+  void EXTI2_IRQHandler()
+  {
+    if (exti_interrupt_flag_get(EXTI_2) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA2().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_2);
+    }
+  }
+
+  void EXTI3_IRQHandler()
+  {
+    if (exti_interrupt_flag_get(EXTI_3) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA3().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_3);
+    }
+  }
+
+  void EXTI4_IRQHandler()
+  {
+    if (exti_interrupt_flag_get(EXTI_4) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA4().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_4);
+    }
+  }
+
+  void EXTI5_9_IRQHandler()
+  {
+    if (exti_interrupt_flag_get(EXTI_5) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA5().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_5);
+    }
+    if (exti_interrupt_flag_get(EXTI_6) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA6().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_6);
+    }
+    if (exti_interrupt_flag_get(EXTI_7) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA7().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_7);
+    }
+    if (exti_interrupt_flag_get(EXTI_8) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA8().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_8);
+    }
+    if (exti_interrupt_flag_get(EXTI_9) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA9().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_9);
+    }
+  }
+
+  void EXTI10_15_IRQHandler()
+  {
+    if (exti_interrupt_flag_get(EXTI_10) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA10().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_10);
+    }
+    if (exti_interrupt_flag_get(EXTI_11) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA11().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_11);
+    }
+    if (exti_interrupt_flag_get(EXTI_12) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA12().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_12);
+    }
+    if (exti_interrupt_flag_get(EXTI_13) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA13().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_13);
+    }
+    if (exti_interrupt_flag_get(EXTI_14) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA14().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_14);
+    }
+    if (exti_interrupt_flag_get(EXTI_15) != RESET)
+    {
+      ::RV::GD32VF103::GpioIrq::gpioA15().irqHandler() ;
+      exti_interrupt_flag_clear(EXTI_15);
+    }
+  }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

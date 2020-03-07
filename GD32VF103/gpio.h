@@ -4,6 +4,19 @@
 
 #pragma once
 
+#include <functional>
+
+extern "C"
+{
+  void EXTI0_IRQHandler() ;
+  void EXTI1_IRQHandler() ;
+  void EXTI2_IRQHandler() ;
+  void EXTI3_IRQHandler() ;
+  void EXTI4_IRQHandler() ;
+  void EXTI5_9_IRQHandler() ;
+  void EXTI10_15_IRQHandler() ;
+}
+
 namespace RV
 {
   namespace GD32VF103
@@ -56,9 +69,75 @@ namespace RV
       rcu_periph_enum _rcuGpio ;
       uint32_t _gpio ;
       uint32_t _pin ;
-      uint32_t _mode ;
     } ;
 
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    class GpioIrq
+    {
+    private:
+      friend void ::EXTI0_IRQHandler() ;
+      friend void ::EXTI1_IRQHandler() ;
+      friend void ::EXTI2_IRQHandler() ;
+      friend void ::EXTI3_IRQHandler() ;
+      friend void ::EXTI4_IRQHandler() ;
+      friend void ::EXTI5_9_IRQHandler() ;
+      friend void ::EXTI10_15_IRQHandler() ;
+      
+      GpioIrq(rcu_periph_enum rcuGpio, uint32_t gpio, uint32_t pin, uint32_t eclicSource,
+              uint8_t extiSourcePort, uint8_t extiSourcePin, exti_line_enum extiLine) ;
+      GpioIrq(const GpioIrq&) = delete ;
+
+    public:
+      using Handler = std::function<void(bool rising)> ;
+
+      enum class Mode
+        {
+         IN_FL  = GPIO_MODE_IN_FLOATING,  // floating input
+         IN_PD  = GPIO_MODE_IPD,          // pull down input
+         IN_PU  = GPIO_MODE_IPU,          // pull up input
+        } ;
+
+      void setup(Mode mode, Handler handler) ;
+
+      volatile bool get() ;
+      void irqDisable() ;
+      void irqEnable() ;
+
+      static GpioIrq& gpioA0() ;  // static GpioIrq& gpioB0() ;   static GpioIrq& gpioC0() ; 
+      static GpioIrq& gpioA1() ;  // static GpioIrq& gpioB1() ;   static GpioIrq& gpioC1() ; 
+      static GpioIrq& gpioA2() ;  // static GpioIrq& gpioB2() ;   static GpioIrq& gpioC2() ; 
+      static GpioIrq& gpioA3() ;  // static GpioIrq& gpioB3() ;   static GpioIrq& gpioC3() ; 
+      static GpioIrq& gpioA4() ;  // static GpioIrq& gpioB4() ;   static GpioIrq& gpioC4() ; 
+      static GpioIrq& gpioA5() ;  // static GpioIrq& gpioB5() ;   static GpioIrq& gpioC5() ; 
+      static GpioIrq& gpioA6() ;  // static GpioIrq& gpioB6() ;   static GpioIrq& gpioC6() ; 
+      static GpioIrq& gpioA7() ;  // static GpioIrq& gpioB7() ;   static GpioIrq& gpioC7() ; 
+      static GpioIrq& gpioA8() ;  // static GpioIrq& gpioB8() ;   static GpioIrq& gpioC8() ; 
+      static GpioIrq& gpioA9() ;  // static GpioIrq& gpioB9() ;   static GpioIrq& gpioC9() ; 
+      static GpioIrq& gpioA10() ; // static GpioIrq& gpioB10() ;  static GpioIrq& gpioC10() ;
+      static GpioIrq& gpioA11() ; // static GpioIrq& gpioB11() ;  static GpioIrq& gpioC11() ;
+      static GpioIrq& gpioA12() ; // static GpioIrq& gpioB12() ;  static GpioIrq& gpioC12() ;
+      static GpioIrq& gpioA13() ; // static GpioIrq& gpioB13() ;  static GpioIrq& gpioC13() ;
+      static GpioIrq& gpioA14() ; // static GpioIrq& gpioB14() ;  static GpioIrq& gpioC14() ;
+      static GpioIrq& gpioA15() ; // static GpioIrq& gpioB15() ;  static GpioIrq& gpioC15() ;
+
+    private:
+
+      void irqHandler() ;
+      
+    private:
+      rcu_periph_enum _rcuGpio ;
+      uint32_t _gpio ;
+      uint32_t _pin ;
+      uint32_t _eclicSource ;
+      uint8_t _extiSourcePort ;
+      uint8_t _extiSourcePin ;
+      exti_line_enum _extiLine ;
+      Handler _handler ;
+
+      volatile bool _value ;
+    } ;   
+    
   }
 }
 
