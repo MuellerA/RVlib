@@ -100,7 +100,7 @@ namespace RV
 
       void setup(Mode mode, Handler handler) ;
 
-      volatile bool get() ;
+      volatile bool pressed() ;
       void irqDisable() ;
       void irqEnable() ;
 
@@ -135,7 +135,7 @@ namespace RV
       exti_line_enum _extiLine ;
       Handler _handler ;
 
-      volatile bool _value ;
+      volatile bool _pressed ;
     } ;   
     
   }

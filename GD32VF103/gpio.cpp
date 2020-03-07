@@ -103,7 +103,8 @@ namespace RV
     GpioIrq::GpioIrq(rcu_periph_enum rcuGpio, uint32_t gpio, uint32_t pin, uint32_t eclicSource,
                      uint8_t extiSourcePort, uint8_t extiSourcePin, exti_line_enum extiLine)
       : _rcuGpio{rcuGpio}, _gpio{gpio}, _pin{pin}, _eclicSource{eclicSource},
-        _extiSourcePort{extiSourcePort}, _extiSourcePin{extiSourcePin}, _extiLine{extiLine}
+        _extiSourcePort{extiSourcePort}, _extiSourcePin{extiSourcePin}, _extiLine{extiLine},
+        _pressed{false}
     {
     }
 
@@ -123,12 +124,13 @@ namespace RV
       exti_interrupt_flag_clear(_extiLine);
     }
 
-    volatile bool GpioIrq::get()
+    volatile bool GpioIrq::pressed()
     {
       irqDisable() ;
-      bool value = _value ;
+      bool p = _pressed ;
+      _pressed = false ;
       irqEnable() ;
-      return value ;
+      return p ;
     }
 
     void GpioIrq::irqDisable()
@@ -143,8 +145,9 @@ namespace RV
     
     void GpioIrq::irqHandler()
     {
-      _value = gpio_input_bit_get(_gpio, _pin) ;
-      if (_handler) _handler(_value) ;
+      bool p = gpio_input_bit_get(_gpio, _pin) ;
+      _pressed |= p ;
+      if (_handler) _handler(p) ;
     }    
 
     GpioIrq& GpioIrq::gpioA0()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_0 , EXTI0_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_0 , EXTI_0 } ; return *gpio ; }
