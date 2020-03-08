@@ -39,6 +39,7 @@ namespace RV
       void put(char ch) ;
       void put(const char *str) ;
       void put(const char *str, uint32_t size) ;
+      void put(const char *str, uint16_t x0, uint16_t y0, int8_t hAligh=0, int8_t vAlign=0) ; // align < 0left|top, ==0 center, >0 right|bottom
       void put(uint32_t val, uint8_t size = 0, char leadingChar = 0 , bool hex = false) ;
       void put( int32_t val, uint8_t size = 0, char leadingChar = 0) ;
       void put(uint16_t val, uint8_t size = 0, char leadingChar = 0 , bool hex = false)

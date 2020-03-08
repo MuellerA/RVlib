@@ -199,6 +199,144 @@ namespace RV
         put(*(str++)) ;
     }
 
+    void LcdArea::put(const char *str, uint16_t x0, uint16_t y0, int8_t hAlign, int8_t vAlign)
+    {
+      int16_t x{0} ;
+      int16_t y{0} ;
+      int16_t xMin{0} ;
+      int16_t xMax{0} ;
+      int16_t yMin{0} ;
+      int16_t yMax{0} ;
+      
+      // calculate widht/height
+      for (const char *c = str ; *c ; ++c)
+      {
+        char ch = *c ;
+        if ((_font->first <= ch) && (ch <= _font->last))
+        {
+          const GFXglyph *glyph = _font->glyph + ch - _font->first ;
+          if (xMin > (x + glyph->xOffset                    )) xMin = (x + glyph->xOffset                    ) ;
+          if (xMax < (x + glyph->xOffset + glyph->width  - 1)) xMax = (x + glyph->xOffset + glyph->width  - 1) ;
+          if (yMin > (y + glyph->yOffset                    )) yMin = (y + glyph->yOffset                    ) ;
+          if (yMax < (y + glyph->yOffset + glyph->height - 1)) yMax = (y + glyph->yOffset + glyph->height - 1) ;
+          x += glyph->xAdvance ;
+        }
+      }
+
+      struct DstBuff
+      {
+        uint16_t _width{0} ;      // width in pixel
+        uint16_t _widthBytes{0} ; // width in bytes
+        uint16_t _height{0} ;
+        std::vector<uint8_t> _buff{} ; // pixed data
+      } dstBuff ;
+      
+      // check size
+      if ((xMin >= xMax) || (yMin >= yMax))
+        return ;
+      dstBuff._width  = xMax - xMin + 1 ;
+      dstBuff._height = yMax - yMin + 1 ;
+      if ((dstBuff._width > 160) || (dstBuff._height > 80))
+        return ;
+
+      // alloc pixel buffer
+      dstBuff._widthBytes = (dstBuff._width+7) / 8 ;
+      dstBuff._buff.resize(dstBuff._widthBytes * dstBuff._height, 0x00) ;
+
+      // fill pixel buffer
+      x = -xMin ;
+      y = -yMin ;
+      for (const char *c = str ; *c ; ++c)
+      {
+        char ch = *c ;
+        if ((_font->first <= ch) && (ch <= _font->last))
+        {
+          const GFXglyph *glyph = _font->glyph + ch - _font->first ;
+
+          uint8_t *srcByte = _font->bitmap + glyph->bitmapOffset ;
+          uint8_t srcMask = 0x80 ;
+
+          int16_t dstXUL = x + glyph->xOffset ; // upper left
+          int16_t dstYUL = y + glyph->yOffset ;
+          
+          for (uint8_t iY = 0 ; iY < glyph->height ; ++iY)
+            for (uint8_t iX = 0 ; iX < glyph->width ; ++iX)
+            {
+              if (*srcByte & srcMask)
+              {
+                uint16_t dstByte = dstBuff._widthBytes * (dstYUL+iY) + (dstXUL+iX)/8 ;
+                uint16_t dstMask = 0x80 >> ((dstXUL+iX)%8) ;
+                dstBuff._buff[dstByte] |= dstMask ;
+              }
+
+              srcMask >>= 1 ;
+              if (!srcMask)
+              {
+                srcByte += 1 ;
+                srcMask = 0x80 ;
+              }
+            }
+          
+          x += glyph->xAdvance ;
+        }
+      }
+
+                    
+      // alignment
+      int16_t x1, xS, y1, yS ;
+      if      (hAlign < 0) x1 = (int16_t)x0 ;
+      else if (hAlign > 0) x1 = (int16_t)x0 - (int16_t)dstBuff._width ;
+      else                 x1 = (int16_t)x0 - (int16_t)(dstBuff._width / 2) ;
+      xS = x1 + dstBuff._width ;
+      
+      if      (vAlign < 0) y1 = (int16_t)y0 ;
+      else if (vAlign > 0) y1 = (int16_t)y0 - (int16_t)dstBuff._height ;
+      else                 y1 = (int16_t)y0 - (int16_t)(dstBuff._height / 2) ;
+      yS = y1 + dstBuff._height ;
+      
+      // copy to lcd
+      struct
+      {
+        uint16_t _xMin ; // pixels to transmit (buffer might be clipped)
+        uint16_t _xMax ;
+        uint16_t _yMin ;
+        uint16_t _yMax ;
+        uint16_t _x ;
+        uint16_t _y ;
+        uint32_t _fgCol ;
+        uint32_t _bgCol ;
+      } cpInfo ;
+
+      cpInfo._xMin = (x1 < 0) ? -x1 : 0 ;
+      cpInfo._xMax = ((xS > _xSize) ? dstBuff._width - (xS - _xSize) : dstBuff._width) - 1 ;
+      cpInfo._yMin = (y1 < 0) ? -y1 : 0 ;
+      cpInfo._yMax = ((yS > _ySize) ? dstBuff._height - (yS - _ySize) : dstBuff._height) - 1 ;
+      cpInfo._x = cpInfo._xMin ;
+      cpInfo._y = cpInfo._yMin ;
+      cpInfo._fgCol = _fgCol ;
+      cpInfo._bgCol = _bgCol ;
+
+      uint16_t absX, absXSize, absY, absYSize ;
+      absX = ((x1 < 0) ? 0 : x1) + _xMin ;
+      absXSize = cpInfo._xMax - cpInfo._xMin + 1 ;
+      absY = ((y1 < 0) ? 0 : y1) + _yMin ;
+      absYSize = cpInfo._yMax - cpInfo._yMin + 1 ;
+      
+      _lcd.absFill(absX, absXSize, absY, absYSize, [&dstBuff, &cpInfo]()->uint32_t
+                                                   {
+                                                     uint16_t byte = dstBuff._widthBytes * cpInfo._y + (cpInfo._x)/8 ;
+                                                     uint16_t mask = 0x80 >> (cpInfo._x%8) ;
+
+                                                     cpInfo._x += 1 ;
+                                                     if (cpInfo._x > cpInfo._xMax)
+                                                     {
+                                                       cpInfo._x =  cpInfo._xMin ;
+                                                       cpInfo._y += 1 ;
+                                                     }
+                                                     return (dstBuff._buff[byte] & mask) ? cpInfo._fgCol : cpInfo._bgCol ;
+                                                   }) ;
+    }    
+
     void LcdArea::put(uint32_t val, uint8_t fmtSize, char leadingChar , bool hex)
     {
       uint8_t size = fmtSize ? fmtSize : 16 ;
