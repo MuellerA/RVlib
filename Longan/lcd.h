@@ -128,7 +128,7 @@ namespace RV
       // heartbeat
       bool    _hbDir{false} ; // direction
       uint8_t _hbPos{0} ; // value
-      ::RV::GD32VF103::TickTimer _hbTimer{250, true} ;
+      ::RV::GD32VF103::TickTimer _hbTimer{500, true} ;
     } ;
 
   }

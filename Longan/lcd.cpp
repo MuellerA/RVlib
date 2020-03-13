@@ -503,45 +503,34 @@ namespace RV
 
     void Lcd::heartbeat()
     {
+      static uint8_t g{0} ;
+
       if (!_hbTimer())
         return ;
 
       // Column Address Set
-      cmd({0x2a, 4, { 0x00, (uint8_t)( 1+152), 0x00, (uint8_t)( 1+159) } }) ; // x-offset  1
+      cmd({0x2a, 4, { 0x00, (uint8_t)( 1+154), 0x00, (uint8_t)( 1+159) } }) ; // x-offset  1
       // Row Address Set
-      cmd({0x2b, 4, { 0x00, (uint8_t)(26+  0), 0x00, (uint8_t)(26+  7) } }) ; // y-offset 26
+      cmd({0x2b, 4, { 0x00, (uint8_t)(26+  0), 0x00, (uint8_t)(26+  2) } }) ; // y-offset 26
       // Memory Write
       cmd(0x2c) ;
 
-      if (_hbDir)
-      {
-        if (_hbPos < 6)
-          _hbPos += 2 ;
-        else
-        {
-          _hbDir = false ;
-          _hbPos = 4 ;
-        }
-      }
-      else
-      {
-        if (_hbPos > 0)
-          _hbPos -= 2 ;
-        else
-        {
-          _hbDir = true ;
-          _hbPos = 2 ;
-        }
-      }
-      
       csLo() ;
       rsHi() ;
-
-      for (uint32_t j = 0 ; j < 8 ; ++j)
+      
+      g = ~g ;
+      for (uint8_t y = 0 ; y < 3 ; ++y)
       {
-        for (uint32_t i = 0 ; i < 8 ; ++i)
+        g = ~g ;
+        for (uint8_t x = 0 ; x < 3 ; ++x)
         {
-          uint8_t g = (i == _hbPos) ? 0xff : 0x00 ;
+          _spi.put(0x00) ;
+          _spi.put(g) ;
+          _spi.put(0x00) ;
+        }
+        g = ~g ;
+        for (uint8_t x = 0 ; x < 3 ; ++x)
+        {
           _spi.put(0x00) ;
           _spi.put(g) ;
           _spi.put(0x00) ;
