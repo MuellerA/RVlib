@@ -7,6 +7,7 @@
 <li>GPIO</li>
 <li>USART</li>
 <li>SPI (master send)</li>
+<li>CAN</li>
 <li>System Tick</li>
 <li>OnBoard LEDs</li>
 <li>OnBoard LCD</li>
