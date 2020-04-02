@@ -76,6 +76,7 @@ namespace RV
     {
     private:
       Can(uint32_t can, rcu_periph_enum rcu) ;
+      Can(const Can&) = delete ;
     public:
       static Can& can1() ;
       static Can& can0() ;
