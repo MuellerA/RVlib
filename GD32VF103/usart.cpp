@@ -115,6 +115,11 @@ namespace RV
       _txData.clear() ;
     }
 
+    void Usart::baud(uint32_t baud)
+    {
+      usart_baudrate_set(_usart, baud) ;
+    }
+    
     Usart& Usart::usart0()
     {
       static Usart *usart0 = new Usart{USART0, RCU_GPIOA, RCU_USART0, USART0_IRQn, GPIOA, GPIO_PIN_9, GPIO_PIN_10} ;

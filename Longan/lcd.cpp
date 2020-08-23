@@ -104,6 +104,16 @@ namespace RV
       _x = 0 ;
       _y = _baseLineOffset ;
     }
+
+    void LcdArea::clearEOL()
+    {
+      clearEOL(_bgCol) ;
+    }
+
+    void LcdArea::clearEOL(uint32_t rgb)
+    {
+      fill(_x, _xSize - _x, _y - _baseLineOffset, _font->yAdvance, rgb) ;
+    }
     
     void LcdArea::fill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, uint32_t rgb)
     {

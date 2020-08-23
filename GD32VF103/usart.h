@@ -56,6 +56,7 @@ namespace RV
       virtual bool put(uint8_t  b) ;
 
       void clear() ;
+      void baud(uint32_t baud) ;
       
       static Usart& usart0() ;
       static Usart& usart1() ;

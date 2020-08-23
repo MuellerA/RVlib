@@ -35,6 +35,8 @@ namespace RV
 
       void clear() ;
       void clear(uint32_t rgb) ;
+      void clearEOL() ;
+      void clearEOL(uint32_t rgb) ;
       void fill(uint8_t xMin, uint8_t xSize, uint8_t yMin, uint8_t ySize, uint32_t rgb = 0x000000) ;
       void put(char ch) ;
       void put(const char *str) ;
