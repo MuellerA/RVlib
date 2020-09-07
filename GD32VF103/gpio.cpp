@@ -154,7 +154,7 @@ namespace RV
     GpioIrq& GpioIrq::gpioA1()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_1 , EXTI1_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_1 , EXTI_1 } ; return *gpio ; }
     GpioIrq& GpioIrq::gpioA2()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_2 , EXTI2_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_2 , EXTI_2 } ; return *gpio ; }
     GpioIrq& GpioIrq::gpioA3()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_3 , EXTI3_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_3 , EXTI_3 } ; return *gpio ; }
-    GpioIrq& GpioIrq::gpioA4()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_4 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_4 , EXTI_4 } ; return *gpio ; }
+    GpioIrq& GpioIrq::gpioA4()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_4 , EXTI4_IRQn    , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_4 , EXTI_4 } ; return *gpio ; }
     GpioIrq& GpioIrq::gpioA5()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_5 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_5 , EXTI_5 } ; return *gpio ; }
     GpioIrq& GpioIrq::gpioA6()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_6 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_6 , EXTI_6 } ; return *gpio ; }
     GpioIrq& GpioIrq::gpioA7()  { static GpioIrq *gpio = new GpioIrq{RCU_GPIOA, GPIOA, GPIO_PIN_7 , EXTI5_9_IRQn  , GPIO_PORT_SOURCE_GPIOA, GPIO_PIN_SOURCE_7 , EXTI_7 } ; return *gpio ; }
