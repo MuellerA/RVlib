@@ -70,7 +70,8 @@ namespace RV
           return false ;
       }
       i2c_stop_on_bus(_i2c);                         // send a stop condition to I2C bus
-      while(I2C_CTL0(_i2c) & 0x0200);                // wait until stop condition generate
+      if (!waitFlagStopGen())                        // wait until stop condition generate
+        return false ;
       
       return true ;
     }
@@ -104,9 +105,12 @@ namespace RV
         data[i] = i2c_data_receive(_i2c) ;           // read a data from I2C_DATA
       }
       i2c_stop_on_bus(_i2c);                         // send a stop condition to I2C bus
-      while(I2C_CTL0(_i2c) & 0x0200) ;               // wait until stop condition generate
+      if (!waitFlagStopGen())                        // wait until stop condition generate
+      {
+        i2c_ack_config(_i2c, I2C_ACK_ENABLE);        // enable acknowledge
+        return false ;
+      }
       i2c_ack_config(_i2c, I2C_ACK_ENABLE);          // enable acknowledge
-
       return true ;
     }
 
@@ -129,13 +133,26 @@ namespace RV
         {
           s |= s & ~errMsk ;
           i2c_stop_on_bus(_i2c);                         // send a stop condition to I2C bus
-          while(I2C_CTL0(_i2c) & 0x0200) ;               // wait until stop condition generate
+          if (!waitFlagStopGen())                        // wait until stop condition generate
+          {
+            i2c_ack_config(_i2c, I2C_ACK_ENABLE);        // enable acknowledge
+            return false ;
+          }
           i2c_ack_config(_i2c, I2C_ACK_ENABLE);          // enable acknowledge
           return false ;
         }
       }
     }
     
+    bool I2c::waitFlagStopGen()
+    {
+      TickTimer t(50) ;
+      
+      while(I2C_CTL0(_i2c) & 0x0200)
+        if (t())
+          return false ;
+      return true ;
+    }
   }
 }
 

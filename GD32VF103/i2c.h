@@ -26,6 +26,7 @@ namespace RV
 
     private:
       bool waitFlag(uint32_t flag, bool set) ;
+      bool waitFlagStopGen() ;
       
       uint32_t _i2c ;
       rcu_periph_enum _rcuI2c ;
