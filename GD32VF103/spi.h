@@ -35,6 +35,9 @@ namespace RV
       // RV::IO
       virtual bool get(uint8_t &b) ;
       virtual bool put(uint8_t  b) ;
+
+      bool xch(uint8_t &b) ;
+      bool xch(uint8_t *data, size_t size, uint8_t mode) ; // mode 1:tx, 2:rx, 3:txrx
       
       bool isTransmit() ;
 
