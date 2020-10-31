@@ -6,7 +6,7 @@
 <ul>
 <li>GPIO</li>
 <li>USART</li>
-<li>SPI (master send)</li>
+<li>SPI (master)</li>
 <li>I2C (master)</li>
 <li>CAN</li>
 <li>System Tick</li>

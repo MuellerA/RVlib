@@ -6,8 +6,12 @@
     {
         "name": "Andreas Müller"
     },
-    "version": "0.0.10",
-    "downloadUrl": "https://github.com/MuellerA/RVlib.git",
+    "version": "0.0.11",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/MuellerA/RVlib.git"
+    },
     "frameworks": "gd32vf103-sdk",
     "platforms": "gd32v"
 }
