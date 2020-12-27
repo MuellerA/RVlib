@@ -49,6 +49,11 @@ namespace RV
       _timeTick = now() ;
     }
 
+    void TickTimer::timeout(uint32_t ms)
+    {
+      _deltaTick = msToTick(ms) ;
+    }
+    
     uint64_t TickTimer::now()
     {
       return get_timer_value() ;

@@ -51,6 +51,10 @@ namespace RV
     }
     
     ////////////////////////////////////////////////////////////////////////////////
+
+    FatFs::File::File()
+    {
+    }
     
     FatFs::Result FatFs::File::open(const char *path, uint8_t mode)
     {
@@ -93,6 +97,10 @@ namespace RV
     }
     
     ////////////////////////////////////////////////////////////////////////////////
+
+    FatFs::Dir::Dir()
+    {
+    }
     
     FatFs::Result FatFs::Dir::open(const char* path)
     {

@@ -6,6 +6,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
 #include "GD32VF103/gpio.h"
 #include "GD32VF103/spi.h"
 #include "GD32VF103/time.h"
@@ -24,6 +26,8 @@ namespace RV
       }
     }
 
+    extern "C" FF::DWORD get_fattime (void) ;
+    
     class FatFs
     {
     public:
@@ -33,6 +37,8 @@ namespace RV
       class File
       {
       public:
+        File() ;
+        File(const File&) = delete ;
         Result open(const char *path, uint8_t mode) ;
         Result close() ;
         Result read(void *buff, size_t &len) ;
@@ -49,6 +55,8 @@ namespace RV
       class Dir
       {
       public:
+        Dir() ;
+        Dir(const Dir&) = delete ;
         Result open(const char* path);
         Result close();
         Result read(FileInfo &fno);
@@ -119,6 +127,7 @@ namespace RV
       
     private:
       friend FF::DWORD get_fattime (void) ;
+
       uint32_t fatTime() ;
       
       ::RV::GD32VF103::Spi &_spi ;

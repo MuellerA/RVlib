@@ -66,7 +66,6 @@ namespace RV
 
     bool Spi::xch(uint8_t &b)
     { 
-      spi_i2s_data_receive(_spi);
       while (spi_i2s_flag_get(_spi, SPI_FLAG_TBE) == RESET);
       spi_i2s_data_transmit(_spi, b) ;
       while (spi_i2s_flag_get(_spi, SPI_FLAG_RBNE) == RESET) ;
@@ -76,27 +75,19 @@ namespace RV
 
     bool Spi::xch(uint8_t *data, size_t size, uint8_t mode)
     {
-      size_t iIn = 0 ;
-      size_t iOut = 0 ;
-      while (iIn < size)
+      for (size_t i = 0 ; i < size ; ++i, ++data)
       {
-        uint32_t flags = SPI_STAT(_spi) ;
-        if (flags & SPI_FLAG_RBNE)
-        {
-          if (mode & 2)
-            data[iIn] = spi_i2s_data_receive(_spi) ;
-          else
-            spi_i2s_data_receive(_spi) ;
-          iIn += 1 ;
-        }
-        if ((flags & SPI_FLAG_TBE) && (iOut < size))
-        {
-          if (mode & 1)
-            spi_i2s_data_transmit(_spi, data[iOut]) ;
-          else
-            spi_i2s_data_transmit(_spi, 0xff) ;
-          iOut += 1 ;
-        }
+        while (spi_i2s_flag_get(_spi, SPI_FLAG_TBE) == RESET);
+        if (mode & 1)
+          spi_i2s_data_transmit(_spi, *data) ;
+        else
+          spi_i2s_data_transmit(_spi, 0xff) ;
+
+        while (spi_i2s_flag_get(_spi, SPI_FLAG_RBNE) == RESET) ;
+        if (mode & 2)
+          *data = spi_i2s_data_receive(_spi) ;
+        else
+          spi_i2s_data_receive(_spi) ;
       }
 
       return true ;

@@ -19,6 +19,7 @@ namespace RV
       bool operator()() ; // has expired (and restart if cyclic==true)
       uint32_t elapsedMs() const ; // ms since started
       void restart() ;
+      void timeout(uint32_t ms) ;
 
       static uint64_t now() ;
       static void delayMs(uint32_t ms = 1) ; // active wait
